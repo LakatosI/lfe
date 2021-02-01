@@ -380,10 +380,10 @@ the expression and then be effectively \f[C]2\f[R].
 (call mod func arg ... )    - Call to Mod:Func(Arg, ... )
 
 (define-record name fields)
-(make-record name field ...)
+(make-record name (field val) ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name {{field]} ...)
+(record-update record name (field val) ...)
 
 (define-module name meta-data attributes)
 (extend-module meta-data attributes)
@@ -961,11 +961,11 @@ the following will be generated:
 .IP
 .nf
 \f[C]
-(make-person {{field value}} ... )
-(match-person {{field value}} ... )
+(make-person (field value) ... )
+(match-person (field value) ... )
 (is-person r)
 (fields-person)
-(update-person r {{field value}} ... )
+(update-person r (field value) ... )
 (person-name r)
 (person-name)
 (update-person-name r name)
@@ -978,12 +978,12 @@ the following will be generated:
 \f[R]
 .fi
 .IP \[bu] 2
-\f[C](make-person name \[dq]Robert\[dq] age 54)\f[R] - Will create a new
-person record with the name field set to \[lq]Robert\[rq], the age field
-set to 54 and the address field set to the default \[dq]\[dq].
+\f[C](make-person (name \[dq]Robert\[dq]) (age 54))\f[R] - Will create a
+new person record with the name field set to \[lq]Robert\[rq], the age
+field set to 54 and the address field set to the default \[dq]\[dq].
 .IP \[bu] 2
-\f[C](match-person name name age 55)\f[R] - Will match a person with age
-55 and bind the variable name to the name field of the record.
+\f[C](match-person (name name) (age 55))\f[R] - Will match a person with
+age 55 and bind the variable name to the name field of the record.
 Can use any variable name here.
 .IP \[bu] 2
 \f[C](is-person john)\f[R] - Test if john is a person record.
@@ -997,8 +997,8 @@ person record.
 \f[C](update-person-address john \[dq]back street\[dq])\f[R] - Updates
 the address field of the person record john to \[lq]back street\[rq].
 .IP \[bu] 2
-\f[C](update-person john age 35 address \[dq]front street\[dq])\f[R] -
-In the person record john update the age field to 35 and the address
+\f[C](update-person john (age 35) (address \[dq]front street\[dq]))\f[R]
+- In the person record john update the age field to 35 and the address
 field to \[lq]front street\[rq].
 .IP \[bu] 2
 \f[C](fields-person)\f[R] - Returns a list of fields for the record.

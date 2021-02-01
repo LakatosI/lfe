@@ -110,6 +110,8 @@ format_error({bad_field,Name,Field}) ->
     lfe_io:format1(<<"bad field ~w in record ~w">>, [Field,Name]);
 format_error({redefine_record,Name}) ->
     lfe_io:format1(<<"record ~w already defined">>, [Name]);
+format_error({missing_field_value,Name,Field}) ->
+    lfe_io:format1(<<"missing value to field ~w in record ~w">>,[Field,Name]);
 %% These are also used in lfe_eval.
 format_error({undefined_record,Name}) ->
     lfe_io:format1(<<"record ~w undefined">>, [Name]);
@@ -882,9 +884,12 @@ check_record_fields(Name, [[F,Val]|Fs], Rfs, Env, L, St0) ->
         false ->
             undefined_field_error(L, Name, F, St0)
     end;
+check_record_fields(Name, [F|Fs], Rfs, Env, L, St0) ->
+    St1 = add_error(L, {missing_field_value,Name,F}, St0),
+    check_record_fields(Name, Fs, Rfs, Env, L, St1);
 check_record_fields(_Name, [], _, _, _, St) -> St;
-check_record_fields(Name, _Pat, _Rfs, _, L, St) ->
-    bad_record_error(L, Name, St).
+check_record_fields(Name, Pat, _Rfs, _, L, St) ->
+    bad_field_error(L, Name, Pat, St).
 
 %% check_record_field(Record, Field, Line, State) -> State.
 %%  Check whether record has a field.

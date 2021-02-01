@@ -22,9 +22,7 @@
 
 -module(lfe_macro_record).
 
--export([define/3,to_pairs/1,format_error/1]).
-
--import(lists, [map/2,foldr/3,concat/1]).
+-export([define/3,format_error/1]).
 
 -include("lfe.hrl").
 -include("lfe_macro.hrl").
@@ -48,12 +46,12 @@ define([], _Env, _St) -> no.                    %Undefined macro
 
 define(Name, Fdefs, Env, St) when is_atom(Name) ->
     %% Get field names, default values and indices.
-    Fields = map(fun ([F,_,_]) when is_atom(F) -> F;
-                     ([F,_]) when is_atom(F) -> F;
-                     ([F]) when is_atom(F) -> F;
-                     (F) when is_atom(F) -> F;
-                     (_) -> bad_record_error(Name)
-                 end, Fdefs),
+    Fields = lists:map(fun ([F,_,_]) when is_atom(F) -> F;
+			   ([F,_]) when is_atom(F) -> F;
+			   ([F]) when is_atom(F) -> F;
+			   (F) when is_atom(F) -> F;
+			   (_) -> bad_record_error(Name)
+		       end, Fdefs),
     %% Make access macros.
     Macs = [make_macro(Name),                   %make-Name
             match_macro(Name),                  %match-Name
@@ -62,7 +60,7 @@ define(Name, Fdefs, Env, St) when is_atom(Name) ->
             set_macro(Name),                    %set-Name
             field_macro(Name, Fields),          %fields-Name
             size_macro(Name, Fields)            %size-Name
-            |
+	   |
             field_macros(Name, Fields)],        %Name-F,set-Name-F
     Type = type_information(Name, Fdefs, St),
     {Macs,Type,Env,St};
@@ -70,47 +68,45 @@ define(Name, _Fdefs, _Env, _St) ->
     bad_record_error(Name).
 
 make_macro(Name) ->
-    Make = list_to_atom(concat(['make','-',Name])),
+    Make = list_to_atom(lists:concat(['make','-',Name])),
     ['defmacro',Make,fds,
-     ?BQ(['make-record',Name,?C_A([':',lfe_macro_record,to_pairs,fds])])].
+     ?BQ(['make-record',Name,?C_A(fds)])].
 
 match_macro(Name) ->
-    Match = list_to_atom(concat(['match','-',Name])),
+    Match = list_to_atom(lists:concat(['match','-',Name])),
     ['defmacro',Match,fds,
-     ?BQ(['make-record',Name,?C_A([':',lfe_macro_record,to_pairs,fds])])].
+     ?BQ(['make-record',Name,?C_A(fds)])].
 
 test_macro(Name, Fs) ->
-    Test = list_to_atom(concat(['is','-',Name])),
+    Test = list_to_atom(lists:concat(['is','-',Name])),
     ['defmacro',Test,[rec],
      ?BQ(['is_record',?C(rec),?Q(Name),length(Fs)+1])].
 
 update_macro(Name) ->
-    Upd = list_to_atom(concat(['update','-',Name])),
+    Upd = list_to_atom(lists:concat(['update','-',Name])),
     [defmacro,Upd,
      [[cons,rec,fds],
-      ?BQ(['record-update',?C(rec),Name,
-           ?C_A([':',lfe_macro_record,to_pairs,fds])])]].
+      ?BQ(['record-update',?C(rec),Name, ?C_A(fds)])]].
 
 set_macro(Name) ->
-    Set = list_to_atom(concat(['set','-',Name])),
+    Set = list_to_atom(lists:concat(['set','-',Name])),
     [defmacro,Set,
      [[cons,rec,fds],
-      ?BQ(['record-update',?C(rec),Name,
-           ?C_A([':',lfe_macro_record,to_pairs,fds])])]].
+      ?BQ(['record-update',?C(rec),Name,?C_A(fds)])]].
 
 field_macro(Name, Fs) ->
-    Recfields = list_to_atom(concat(['fields','-',Name])),
+    Recfields = list_to_atom(lists:concat(['fields','-',Name])),
     ['defmacro',Recfields,[],?BQ(?Q(Fs))].
 
 size_macro(Name, Fs) ->
-    Recsize = list_to_atom(concat(['size','-',Name])),
+    Recsize = list_to_atom(lists:concat(['size','-',Name])),
     ['defmacro',Recsize,[],length(Fs)+1].       %Don't forget the record name
 
 field_macros(Name, Fs) ->
     Fun = fun (F, Fas) ->
-                  Get = list_to_atom(concat([Name,'-',F])),
-                  Set = list_to_atom(concat(['set-',Name,'-',F])),
-                  Upd = list_to_atom(concat(['update-',Name,'-',F])),
+                  Get = list_to_atom(lists:concat([Name,'-',F])),
+                  Set = list_to_atom(lists:concat(['set-',Name,'-',F])),
+                  Upd = list_to_atom(lists:concat(['update-',Name,'-',F])),
                   [[defmacro,Get,
                     [[],?Q(['record-index',Name,F])],
                     [[list,rec],
@@ -127,13 +123,5 @@ type_information(Name, Fdefs, _St) ->
     %% We push the problem of generating the right final forms to the
     %% code generator which knows about the record attribute.
     [record,[Name|Fdefs]].
-
-%% to_pairs(List) -> AList.
-%%  Pack pairs of key and value into a list of pairs. If it is not a
-%%  list of pairs just return the end and let lint catch the error.
-
-to_pairs([K,V|List]) ->
-    [[K,V]|to_pairs(List)];
-to_pairs(End) -> End.
 
 bad_record_error(Name) -> error({bad_record,Name}).

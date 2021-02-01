@@ -42,7 +42,7 @@
 
 (defun foo-bar
   "Given a #foo{}, return its bar."
-  ([(match-foo bar bar)] bar))
+  ([(match-foo (bar bar))] bar))
 
 
 (defmodule another-example)

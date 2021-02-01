@@ -170,8 +170,8 @@
    (line (test-pat '(#(#(#b(27) #(d 5 $1 hej hej))
                        ()
                        (#(#(d hej #(* $1 2) flurp flurp)))))
-                   (ets-ms ([(tuple #b(27) (match-d a 5 b b _ 'hej))]
-                            (make-d a 'hej b (* b 2) _ 'flurp)))))
+                   (ets-ms ([(tuple #b(27) (match-d (a 5) (b b) (_ 'hej)))]
+                            (make-d (a 'hej) (b (* b 2)) (_ 'flurp))))))
 
    'ok))
 
@@ -241,9 +241,9 @@
     (test-pat
      '(#(#(t $1 $2 foo _) (#(is_list $1)) (#(#(#(hd $1) $_))))
        #(#(t _ _ _ _) (#(== #(element 2 $_) nisse)) (#(#($*)))))
-     (ets-ms ([(match-t t1 x t2 y t3 'foo _ '_)] (when (is_list x))
+     (ets-ms ([(match-t (t1 x) (t2 y) (t3 'foo) (_ '_))] (when (is_list x))
               (tuple (hd x) (object)))
-             ([(match-t _ '_)] (when (== (t-t1 (object)) 'nisse))
+             ([(match-t (_ '_))] (when (== (t-t1 (object)) 'nisse))
               (tuple (bindings))))
      ))
 
@@ -261,11 +261,11 @@
             (#(#(#(element 2 $1)
                  #(#(t $1 foo undefined undefined))
                  #(setelement 5 $1 boooo))))))
-     (ets-ms ([(match-t t1 x t2 y t4 'foo _ '_)]
+     (ets-ms ([(match-t (t1 x) (t2 y) (t4 'foo) (_ '_))]
               (when (== (t-t3 (object)) 7) (is_list x))
               (tuple (hd x) (object)))
              ([a] (when (is-t a))
-              (tuple (t-t1 a) (make-t t1 a) (set-t-t4 a 'boooo))))
+              (tuple (t-t1 a) (make-t (t1 a)) (set-t-t4 a 'boooo))))
      ))
 
    ;; [{[{t,'$1','$2',foo,'_'}],[{is_list,'$1'}],[{{{hd,'$1'},'$_'}}]},
@@ -274,9 +274,11 @@
     (test-pat
      '(#((#(t $1 $2 foo _)) (#(is_list $1)) (#(#(#(hd $1) $_))))
        #((#(t _ _ _ _)) (#(== #(element 2 #(hd $_)) nisse)) (#(#($*)))))
-     (trace-ms ([(list (match-t t1 x t2 y t3 'foo _ '_))] (when (is_list x))
+     (trace-ms ([(list (match-t (t1 x) (t2 y) (t3 'foo) (_ '_)))]
+		(when (is_list x))
                 (tuple (hd x) (object)))
-               ([(list (match-t _ '_))] (when (== (t-t1 (hd (object))) 'nisse))
+               ([(list (match-t (_ '_)))]
+		(when (== (t-t1 (hd (object))) 'nisse))
                 (tuple (bindings))))
      ))
 
@@ -307,9 +309,9 @@
   ([config] (when (is_list config))
    (line (setup config))
    (line (test-pat '(#(#(a 3 _) () ($_)))
-                   (ets-ms ([(= (match-a a 3 _ '_) a)] a))))
+                   (ets-ms ([(= (match-a (a 3) (_ '_)) a)] a))))
    (line (test-pat '(#(#(a 3 _) () ($_)))
-                   (ets-ms ([(= (match-a a 3 _ '_) a)] a))))
+                   (ets-ms ([(= (match-a (a 3) (_ '_)) a)] a))))
    (line (test-pat '(#((a b) () ($_)))
                    (trace-ms ([(= a (list 'a 'b))] a))))
    (line (test-pat '(#((a b) () ($_)))

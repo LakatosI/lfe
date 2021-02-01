@@ -339,10 +339,10 @@ while it reads the expression and then be effectively ``2``.
 (call mod func arg ... )    - Call to Mod:Func(Arg, ... )
 
 (define-record name fields)
-(make-record name field ...)
+(make-record name (field val) ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name {{field]} ...)
+(record-update record name (field val) ...)
 
 (define-module name meta-data attributes)
 (extend-module meta-data attributes)
@@ -854,11 +854,11 @@ E.g. for
 the following will be generated:
 
 ```
-(make-person {{field value}} ... )
-(match-person {{field value}} ... )
+(make-person (field value) ... )
+(match-person (field value) ... )
 (is-person r)
 (fields-person)
-(update-person r {{field value}} ... )
+(update-person r (field value) ... )
 (person-name r)
 (person-name)
 (update-person-name r name)
@@ -870,12 +870,12 @@ the following will be generated:
 (update-person-address r address)
 ```
 
-* ``(make-person name "Robert" age 54)`` -
+* ``(make-person (name "Robert") (age 54))`` -
   Will create a new person record with the name field set to
   "Robert", the age field set to 54 and the address field set to
   the default "".
 
-* ``(match-person name name age 55)`` -
+* ``(match-person (name name) (age 55))`` -
   Will match a person with age 55 and bind the variable name to
   the name field of the record. Can use any variable name here.
 
@@ -892,7 +892,7 @@ the following will be generated:
   Updates the address field of the person record john to
   "back street".
 
-* ``(update-person john age 35 address "front street")`` -
+* ``(update-person john (age 35) (address "front street"))`` -
   In the person record john update the age field to 35 and the
   address field to "front street".
 

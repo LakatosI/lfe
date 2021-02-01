@@ -57,8 +57,6 @@ format_error({bad_env_form,Type}) ->
 format_error({expand_macro,Call,Error}) ->
     %% Can be very big so only print limited depth.
     lfe_io:format1(<<"error expanding ~P:\n    ~P">>, [Call,10,Error,10]);
-format_error({missing_field_value,R,F}) ->
-    lfe_io:format1(<<"missing value to field ~w in record ~w">>,[F,R]);
 format_error(Error) ->
     lfe_io:format1(<<"macro expansion error: ~P\n">>, [Error,10]).
 
@@ -311,7 +309,7 @@ pass_expand_expr([_|_]=E0, Env, St0, Deep) ->
             no -> {no,E0,St0}
         end
     catch
-        _:Error -> {no,E0,add_error(Error, St0)}
+        _:Error:Stack -> {no,E0,add_error({Error,Stack}, St0)}
     end;
 pass_expand_expr(E, _, St, _) -> {no,E,St}.
 
@@ -516,15 +514,18 @@ exp_rec_field(Fdef, Env, St) ->
     exp_form(Fdef, Env, St).
 
 %% exp_rec_args(Args, Name, Env, State) -> {ExpArgs,State}.
-%%  Expand the arguments for the record. Field names are literals.
+%%  Expand the arguments for the record. Field names are literals but
+%%  we don't check that here.
 
-exp_rec_args(Name, [[F,V]|As], Env, St0) ->
-    %% {Ef,St1} = exp_form(F, Env, St0),
-    {Ev,St1} = exp_form(V, Env, St0),
+exp_rec_args(Name, [[_|_]=Fv|As], Env, St0) ->
+    {Efv,St1} = exp_list(Fv, Env, St0),
     {Eas,St2} = exp_rec_args(Name, As, Env, St1),
-    {[[F,Ev]|Eas],St2};
-exp_rec_args(Name, [F], _, _) -> error({missing_field_value,Name,F});
-exp_rec_args(_, [], _, St) -> {[],St}.
+    {[Efv|Eas],St2};
+exp_rec_args(Name, [F|As], Env, St0) ->
+    {Ef,St1} = exp_form(F, Env, St0),
+    {Eas,St2} = exp_rec_args(Name, As, Env, St1),
+    {[Ef|Eas],St2};
+exp_rec_args(_, Other, _, St) -> {Other,St}.    %Just pass it on
 
 %% exp_clauses(Clauses, Env, State) -> {ExpCls,State}.
 %% exp_ml_clauses(Clauses, Env, State) -> {ExpCls,State}.
@@ -1135,7 +1136,7 @@ exp_append(Args) ->
         %% Cases with explicit cons/list/list*.
         [['list*',A]|As] -> exp_append([A|As]);
         [['list*',A|Las]|As] -> [cons,A,exp_append([['list*'|Las]|As])];
-	[[list|Las]|As] -> lists:foldr(ConsList, exp_append(As), Las);
+        [[list|Las]|As] -> lists:foldr(ConsList, exp_append(As), Las);
         [[cons,H,T]|As] -> [cons,H,exp_append([T|As])];
         [[]|As] -> exp_append(As);
 	[A|As] ->
